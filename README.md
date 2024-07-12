@@ -1,3 +1,4 @@
+
 # ROS2 RPi AS5048A Encoder Package
 
 This package provides a ROS 2 node for interfacing with the AS5048A encoder via SPI on a Raspberry Pi. The node publishes encoder data to various ROS topics.
@@ -9,7 +10,7 @@ This package provides a ROS 2 node for interfacing with the AS5048A encoder via 
 ## Features
 
 - Reads data from the AS5048A encoder over SPI.
-- Publishes raw angle, and cumulative angle to ROS topics.
+- Publishes raw angle and cumulative angle to ROS topics.
 
 ## Dependencies
 
@@ -33,7 +34,7 @@ This package depends on several ROS 2 packages and the `spidev` Python package.
 2. **Install ROS 2 Python dependencies**:
     ```bash
     sudo apt update
-    sudo apt install ros-humble-rclpy ros-humble-nav-msgs ros-humble-geometry-msgs ros-humble-std-msgs 
+    sudo apt install ros-humble-rclpy ros-humble-std-msgs 
     ```
 
 3. **Install `spidev`** for Python:
@@ -69,32 +70,34 @@ This package depends on several ROS 2 packages and the `spidev` Python package.
 
 ### Connect SPI0 between AS5048A and Raspberry Pi
 
-| AS5048A Pin | Raspberry Pi Pin |
-|-------------|------------------|
-| VCC         | Pin 1 or Pin 17 (3.3V)     |
-| GND         | Pin 6 (GND) or any other GND pins     |
-| MOSI        | GPIO 10 (SPI0 MOSI)    |
-| MISO        | GPIO 9 (SPI0 MISO)    |
-| SCK         | GPIO 11 (SPI0 SCLK)    |
-| CS          | GPIO 8 (SPI0 CE0)     |
+| AS5048A Pin | Raspberry Pi Pin         |
+|-------------|--------------------------|
+| VCC         | Pin 1 or Pin 17 (3.3V)   |
+| GND         | Pin 6 (GND) or any other GND pin |
+| MOSI        | GPIO 10 (SPI0 MOSI)      |
+| MISO        | GPIO 9 (SPI0 MISO)       |
+| SCK         | GPIO 11 (SPI0 SCLK)      |
+| CS          | GPIO 8 (SPI0 CE0)        |
+
+### Enable SPI on your Raspberry Pi
+
+If using Ubuntu 22.04 OS, make sure SPI is enabled in `config.txt`:
+```
+dtparam=spi=on
+```
+
+Or if using Raspberry Pi OS:
+```bash
+sudo raspi-config
+```
+Navigate to `Interfacing Options` > `SPI` and enable it.
 
 ## Usage
 
-1. **Enable SPI** on your Raspberry Pi (if using Raspberry Pi OS):
-    ```bash
-    sudo raspi-config
-    ```
-    Navigate to `Interfacing Options` > `SPI` and enable it.
-
-    If you are using Ubuntu 22.04, make sure SPI is enabled in `config.txt`:
-    ```
-    dtparam=spi=on
-    ```
-
-2. **Run the node using the launch file**:
-    ```bash
-    ros2 launch ros2_rpi_as5048a encoder.launch.py
-    ```
+**Run the node using the launch file**:
+```bash
+ros2 launch ros2_rpi_as5048a encoder.launch.py
+```
 
 ## Node Details
 
@@ -104,8 +107,9 @@ This package depends on several ROS 2 packages and the `spidev` Python package.
 
 ### Published Topics
 
-- `raw_angle` (`std_msgs/Float32`): The raw angle from the encoder.
-- `cumulative_angle` (`std_msgs/Float32`): The cumulative angle.
+- `/encoder_absolute_angle` (`std_msgs/Float32`): The absolute angle in radians (between 0 to $2\pi$).
+- `/encoder_cumulative_angle` (`std_msgs/Float32`): The cumulative angle in radians.
+- `/encoder_angular_velocity` (`std_msgs/Float32`): The angular velocity in rads/s.
 
 ## License
 
