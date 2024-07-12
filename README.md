@@ -18,7 +18,6 @@ This package depends on several ROS 2 packages and the `spidev` Python package.
 ### ROS 2 Dependencies
 
 - `rclpy`
-- `geometry_msgs`
 - `std_msgs`
 
 ### Python Dependencies
@@ -110,4 +109,4 @@ This package depends on several ROS 2 packages and the `spidev` Python package.
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+MIT

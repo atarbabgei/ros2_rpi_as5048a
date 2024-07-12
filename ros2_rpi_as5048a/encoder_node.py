@@ -5,6 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float32
 import spidev
 import math
+import time
 
 class AS5048AEncoder(Node):
     def __init__(self):
@@ -16,8 +17,9 @@ class AS5048AEncoder(Node):
         # Get parameter values
         self.encoder_resolution = self.get_parameter('encoder_resolution').get_parameter_value().double_value
 
-        self.raw_angle_publisher_ = self.create_publisher(Float32, 'raw_angle', 10)
-        self.cumulative_angle_publisher_ = self.create_publisher(Float32, 'cumulative_angle', 10)
+        self.absolute_angle_publisher_ = self.create_publisher(Float32, 'encoder_absolute_angle', 10)
+        self.cumulative_angle_publisher_ = self.create_publisher(Float32, 'encoder_cumulative_angle', 10)
+        self.angular_velocity_publisher_ = self.create_publisher(Float32, 'encoder_angular_velocity', 10)
         
         self.timer_period = 0.1  # seconds
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
@@ -29,6 +31,8 @@ class AS5048AEncoder(Node):
 
         self.previous_angle = None
         self.cumulative_angle = 0.0
+        self.previous_time = time.time()
+        self.previous_cumulative_angle = 0.0
 
         # Check if the device is connected
         if not self.is_device_connected():
@@ -79,20 +83,29 @@ class AS5048AEncoder(Node):
         self.cumulative_angle_publisher_.publish(cumulative_angle_msg)
 
     def timer_callback(self):
-        cumulative_angle_radians, raw_angle_radians = self.read_angle()
+        cumulative_angle_radians, absolute_angle_radians = self.read_angle()
+        current_time = time.time()
         if cumulative_angle_radians is not None:
-            # Prepare and publish raw angle message
-            raw_angle_msg = Float32()
-            raw_angle_msg.data = raw_angle_radians
-            self.raw_angle_publisher_.publish(raw_angle_msg)
+            # Prepare and publish absolute angle message
+            absolute_angle_msg = Float32()
+            absolute_angle_msg.data = absolute_angle_radians
+            self.absolute_angle_publisher_.publish(absolute_angle_msg)
 
             # Prepare and publish cumulative angle message
             cumulative_angle_msg = Float32()
             cumulative_angle_msg.data = cumulative_angle_radians
             self.cumulative_angle_publisher_.publish(cumulative_angle_msg)
             
-            # logs
-            #self.get_logger().info(f'Publishing: {cumulative_angle_radians} radians, {raw_angle_radians} radians')
+            # Calculate and publish angular velocity
+            delta_time = current_time - self.previous_time
+            angular_velocity = (cumulative_angle_radians - self.previous_cumulative_angle) / delta_time
+            angular_velocity_msg = Float32()
+            angular_velocity_msg.data = angular_velocity
+            self.angular_velocity_publisher_.publish(angular_velocity_msg)
+
+            # Update previous values for next calculation
+            self.previous_time = current_time
+            self.previous_cumulative_angle = cumulative_angle_radians
 
     def read_angle(self):
         command = [0xFF, 0xFF]
