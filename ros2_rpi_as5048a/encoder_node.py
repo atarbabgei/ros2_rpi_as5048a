@@ -47,6 +47,9 @@ class AS5048AEncoder(Node):
 
     def is_device_connected(self):
         try:
+            self.spi.xfer2([0xFF, 0xFF])  # Reset command or NOP to clear the bus
+            time.sleep(0.1)  # Short delay to allow the device to respond
+
             command = [0x00, 0x00]  # Send a NOP command
             response = self.spi.xfer2(command)
             if len(response) == 2 and (response[0] != 0x00 or response[1] != 0x00):
