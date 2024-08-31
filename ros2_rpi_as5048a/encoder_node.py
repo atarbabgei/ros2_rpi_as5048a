@@ -114,7 +114,7 @@ class AS5048AEncoder(Node):
             # Publish JointState message
             joint_state_msg = JointState()
             joint_state_msg.header.stamp = self.get_clock().now().to_msg()
-            joint_state_msg.name = ['propeller_guard_joint']
+            joint_state_msg.name = ['joint_0']
             joint_state_msg.position = [cumulative_angle_radians]
             joint_state_msg.velocity = [angular_velocity]
             joint_state_msg.effort = [0.0]
