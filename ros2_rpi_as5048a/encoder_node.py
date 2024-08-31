@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
+from sensor_msgs.msg import JointState  # Import JointState message type
 import spidev
 import math
 import time
@@ -17,9 +18,13 @@ class AS5048AEncoder(Node):
         # Get parameter values
         self.encoder_resolution = self.get_parameter('encoder_resolution').get_parameter_value().double_value
 
-        self.absolute_angle_publisher_ = self.create_publisher(Float32, 'encoder_absolute_angle', 10)
-        self.cumulative_angle_publisher_ = self.create_publisher(Float32, 'encoder_cumulative_angle', 10)
-        self.angular_velocity_publisher_ = self.create_publisher(Float32, 'encoder_angular_velocity', 10)
+        # Update publisher topics to be subtopics of /encoder/
+        self.absolute_angle_publisher_ = self.create_publisher(Float32, '/encoder/absolute_angle', 10)
+        self.cumulative_angle_publisher_ = self.create_publisher(Float32, '/encoder/cumulative_angle', 10)
+        self.angular_velocity_publisher_ = self.create_publisher(Float32, '/encoder/angular_velocity', 10)
+        
+        # Create a publisher for the /joint_states topic
+        self.joint_state_publisher_ = self.create_publisher(JointState, '/joint_states', 10)
         
         self.timer_period = 0.1  # seconds
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
@@ -105,6 +110,15 @@ class AS5048AEncoder(Node):
             angular_velocity_msg = Float32()
             angular_velocity_msg.data = angular_velocity
             self.angular_velocity_publisher_.publish(angular_velocity_msg)
+
+            # Publish JointState message
+            joint_state_msg = JointState()
+            joint_state_msg.header.stamp = self.get_clock().now().to_msg()
+            joint_state_msg.name = ['propeller_guard_joint']
+            joint_state_msg.position = [cumulative_angle_radians]
+            joint_state_msg.velocity = [angular_velocity]
+            joint_state_msg.effort = [0.0]
+            self.joint_state_publisher_.publish(joint_state_msg)
 
             # Update previous values for next calculation
             self.previous_time = current_time
